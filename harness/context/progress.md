@@ -3,6 +3,8 @@
 Where I am *inside* the current step. The step number itself lives at the top
 of `../docs/design.md`; update both when a step is finished.
 
+Last synced commit: (none yet; run `/kb-sync`)
+
 ## Current step: 1, Tokens and transformers by hand
 
 **Goal:** run a tiny model on the Mac and understand tokenizers, logits and
