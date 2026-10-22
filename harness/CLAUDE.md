@@ -47,5 +47,13 @@ invent facts about my project.
 
 ## Keep the notes current
 
-When we finish a step or make a decision, offer to update `context/progress.md`
-or `context/decisions.md`. Don't edit them silently.
+| File | Holds | Update when |
+|---|---|---|
+| `context/progress.md` | Where I am inside the current step, plus a session log | We finish something or end a session |
+| `context/decisions.md` | Decisions made while building (#3 onward) | We pick one option over another |
+| `context/glossary.md` | Terms I've learned, in plain words | A new term comes up |
+| `context/sources.md` | Official docs sites you may read | We start using a new technology |
+
+Offer the update and show what you'd write. Don't edit these files silently.
+When a step is finished, also update "Current step" at the top of
+`../docs/design.md` and tick it in the build order.
