@@ -31,6 +31,9 @@ Say the type in one line: `Type: concept`.
 3. The repo code under `../`. Use Grep/Glob to find it; read only what you need.
 4. Official docs from `context/sources.md`, only to explain or verify a technology.
 
+Run shell commands one at a time: plain `git status`, `git log …`, `git diff …`, with
+no `cd`, pipes or `&&`. Only those simple forms are pre-approved.
+
 Per type:
 
 - **progress:** design doc build order + `progress.md`. Name the current step, what's done inside it, and ONE next action.

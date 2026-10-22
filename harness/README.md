@@ -12,31 +12,36 @@ and official docs, one step at a time.
 | `.claude/settings.json` | What Claude may read without asking: the repo, read-only git, the docs sites |
 | `.claude/skills/kb-answer/` | `/kb-answer <question>`: answers with citations |
 | `.claude/skills/kb-sync/` | `/kb-sync`: refreshes the notes after you've pushed work |
-| `site/index.html` | A one-page dashboard of your progress and notes |
+| `site/` | The dashboard: your progress and notes, plus a chat with your tutor (`server.py` runs it) |
 
 ## Use it
 
-**Ask questions.** Two separate steps:
+### The dashboard: viewer and chat in one page
 
-1. In your terminal, start Claude inside `harness/`:
+```bash
+cd ~/paper-companion
+uv run python harness/site/server.py
+# open http://localhost:8000/harness/site/
+```
+
+- **Ask** in the "Ask your tutor" box. Enter sends, Shift+Enter adds a new line.
+  The first message uses `/kb-answer`, and follow-ups continue the same conversation.
+- **New chat** starts a fresh conversation. **Sync notes** runs `/kb-sync`.
+- Answers come from Claude Code on your Mac (your login, rules and skills).
+  From the page, Claude can read the repo but may only edit your notes
+  (`harness/context/` and `docs/design.md`), never your code.
+- Stop the server with **Ctrl + C**.
+
+### Or in the terminal
+
+1. Start Claude inside `harness/`:
    ```bash
-   cd paper-companion/harness
+   cd ~/paper-companion/harness
    claude
    ```
-2. Wait for Claude's own input box to appear, then type this **into Claude**,
-   not into the terminal:
+2. Wait for Claude's input box, then type this **into Claude**, not into the terminal:
    ```
    /kb-answer what's the current step, and what do I do next?
    ```
 
-**After a coding session:** `/kb-sync`
-
-**See the dashboard** (serve from the repo root so the page can read `docs/`):
-
-```bash
-cd paper-companion
-python3 -m http.server 8000
-# open http://localhost:8000/harness/site/
-```
-
-Type a question on the page, click **Copy command**, and paste it into Claude.
+After a coding session, run `/kb-sync` (or click **Sync notes** on the dashboard).

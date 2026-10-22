@@ -87,11 +87,30 @@
   button:hover { border-color: var(--accent); color: var(--accent); }
   button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
   button.primary:hover { opacity: .9; color: #fff; }
-  pre.cmd {
-    white-space: pre-wrap; word-break: break-word; background: var(--code);
-    padding: 10px; border-radius: 8px; margin: 8px 0; font-size: 13px; min-height: 38px;
-  }
   .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .between { justify-content: space-between; }
+  .between h2 { margin: 0; }
+  button:disabled { opacity: .5; cursor: default; }
+
+  /* Chat */
+  .chat { display: flex; flex-direction: column; gap: 12px; margin: 12px 0; max-height: 620px; overflow-y: auto; }
+  .chat:empty { display: none; }
+  .msg { max-width: 100%; overflow-wrap: anywhere; }
+  .msg.user {
+    align-self: flex-end; max-width: 85%; white-space: pre-wrap;
+    background: var(--accent-soft); padding: 8px 12px; border-radius: 12px 12px 2px 12px;
+  }
+  .msg.bot { border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; }
+  .msg.err { background: var(--warn-soft); color: var(--warn); padding: 8px 12px; border-radius: 8px; white-space: pre-wrap; }
+  .msg.wait { color: var(--muted); font-style: italic; }
+  .msg.bot p, .msg.bot ul, .msg.bot ol, .msg.bot pre, .msg.bot blockquote, .msg.bot .table-wrap { margin: 0 0 10px; }
+  .msg.bot > :last-child { margin-bottom: 0; }
+  .msg.bot h4 { margin: 12px 0 6px; font-size: 15px; }
+  .msg.bot ul, .msg.bot ol { padding-left: 20px; }
+  .msg.bot pre { background: var(--code); padding: 10px; border-radius: 8px; overflow-x: auto; }
+  .msg.bot pre code { background: none; padding: 0; }
+  .msg.bot blockquote { border-left: 3px solid var(--line); padding-left: 10px; color: var(--muted); }
+  .msg.bot hr { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
 
   /* Tables */
   .table-wrap { overflow-x: auto; }
@@ -110,7 +129,7 @@
 <main>
   <header>
     <h1>Paper Companion Harness</h1>
-    <p>Your project at a glance. Answers come from Claude via <code>/kb-answer</code>.</p>
+    <p>Your project at a glance, and a tutor that answers from it.</p>
   </header>
 
   <nav>
@@ -141,15 +160,20 @@
   </section>
 
   <section id="ask">
-    <h2>Ask your tutor</h2>
-    <p class="muted small">Type a question or paste an error. Copy the command, then paste it into Claude running in <code>harness/</code>.</p>
+    <div class="row between">
+      <h2>Ask your tutor</h2>
+      <div class="row">
+        <button id="sync" title="Run /kb-sync: refresh your notes from the repo">Sync notes</button>
+        <button id="new">New chat</button>
+      </div>
+    </div>
+    <p class="muted small">Answers come from Claude Code on your Mac, following your harness rules. Follow-up messages continue the same conversation.</p>
+    <div class="chat" id="chat" aria-live="polite"></div>
     <div class="chips" id="examples"></div>
-    <textarea id="q" placeholder="e.g. Explain what a KV cache is"></textarea>
-    <pre class="cmd" id="cmd"></pre>
-    <div class="row">
-      <button class="primary" id="copy">Copy command</button>
-      <button id="sync">Copy /kb-sync</button>
-      <span class="muted small" id="copied" aria-live="polite"></span>
+    <textarea id="q" placeholder="Ask a question or paste an error… (Enter to send, Shift+Enter for a new line)"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="primary" id="send">Send</button>
+      <span class="muted small" id="status"></span>
     </div>
   </section>
 
@@ -338,47 +362,164 @@ function renderAll(md) {
   $("examples").onclick = (ev) => {
     const b = ev.target.closest("button");
     if (!b) return;
-    $("q").value = examples[b.dataset.i];
-    $("q").focus();
-    updateCmd();
+    const text = examples[b.dataset.i];
+    if (text.includes("<paste")) {  // needs the user's error first
+      $("q").value = text;
+      $("q").focus();
+    } else {
+      send(text, { fresh: true });
+    }
   };
 }
 
-function updateCmd() {
-  const q = $("q").value.trim();
-  $("cmd").textContent = q ? `/kb-answer ${q}` : "/kb-answer <your question>";
-}
+// ---------- Chat ----------
 
-async function copy(text) {
-  try { await navigator.clipboard.writeText(text); }
-  catch {
-    const t = document.createElement("textarea");
-    t.value = text; document.body.appendChild(t); t.select();
-    document.execCommand("copy"); t.remove();
+// Block Markdown for Claude's answers: headings, lists, code, tables, quotes.
+function markdown(text) {
+  const lines = text.replace(/\r/g, "").split("\n");
+  const out = [];
+  const isBlockStart = (l) => /^(#{1,6}\s|```|\s*\||\s*([-*]|\d+\.)\s|>|---+\s*$)/.test(l);
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (!line.trim()) { i++; continue; }
+    if (line.startsWith("```")) {
+      const code = [];
+      for (i++; i < lines.length && !lines[i].startsWith("```"); i++) code.push(lines[i]);
+      i++;
+      out.push(`<pre><code>${esc(code.join("\n"))}</code></pre>`);
+    } else if (/^\s*\|/.test(line)) {
+      const block = [];
+      for (; i < lines.length && /^\s*\|/.test(lines[i]); i++) block.push(lines[i]);
+      const t = tables(block.join("\n"))[0];
+      out.push(`<div class="table-wrap"><table><thead><tr>${t.head.map((h) => `<th>${inline(h)}</th>`).join("")}</tr></thead>
+        <tbody>${t.rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
+    } else if (/^#{1,6}\s/.test(line)) {
+      out.push(`<h4>${inline(line.replace(/^#+\s*/, ""))}</h4>`);
+      i++;
+    } else if (/^\s*([-*]|\d+\.)\s/.test(line)) {
+      const ordered = /^\s*\d+\./.test(line);
+      const items = [];
+      for (; i < lines.length && lines[i].trim(); i++) {
+        if (/^\s*([-*]|\d+\.)\s/.test(lines[i])) items.push(lines[i].replace(/^\s*([-*]|\d+\.)\s+/, ""));
+        else if (items.length) items[items.length - 1] += " " + lines[i].trim();
+      }
+      const tag = ordered ? "ol" : "ul";
+      out.push(`<${tag}>${items.map((it) => `<li>${inline(it)}</li>`).join("")}</${tag}>`);
+    } else if (line.startsWith(">")) {
+      const quote = [];
+      for (; i < lines.length && lines[i].startsWith(">"); i++) quote.push(lines[i].replace(/^>\s?/, ""));
+      out.push(`<blockquote>${inline(quote.join(" "))}</blockquote>`);
+    } else if (/^---+\s*$/.test(line)) {
+      out.push("<hr>");
+      i++;
+    } else {
+      const para = [];
+      for (; i < lines.length && lines[i].trim() && !isBlockStart(lines[i]); i++) para.push(lines[i]);
+      out.push(`<p>${para.map(inline).join("<br>")}</p>`);
+    }
   }
-  $("copied").textContent = "Copied. Paste it into Claude.";
-  setTimeout(() => { $("copied").textContent = ""; }, 2500);
+  return out.join("");
 }
 
-$("q").addEventListener("input", updateCmd);
-$("copy").onclick = () => copy($("cmd").textContent);
-$("sync").onclick = () => copy("/kb-sync");
-updateCmd();
+// The conversation survives a page refresh (per browser tab).
+const STORE = "paper-companion-chat";
+let chat = { sessionId: null, messages: [] };
+try { chat = JSON.parse(sessionStorage.getItem(STORE)) || chat; } catch {}
+const saveChat = () => { try { sessionStorage.setItem(STORE, JSON.stringify(chat)); } catch {} };
+let busy = false;
 
-(async () => {
+function drawChat() {
+  $("chat").innerHTML = chat.messages.map((m) =>
+    m.role === "user" ? `<div class="msg user">${esc(m.text)}</div>`
+    : m.role === "error" ? `<div class="msg err">${esc(m.text)}</div>`
+    : `<div class="msg bot">${markdown(m.text)}</div>`).join("") +
+    (busy ? '<div class="msg wait" id="wait">Thinking…</div>' : "");
+  $("chat").scrollTop = $("chat").scrollHeight;
+}
+
+function setBusy(on) {
+  busy = on;
+  for (const id of ["send", "sync", "new"]) $(id).disabled = on;
+  $("examples").querySelectorAll("button").forEach((b) => { b.disabled = on; });
+}
+
+async function send(text, { fresh = false } = {}) {
+  text = text.trim();
+  if (!text || busy) return;
+  if (fresh) chat = { sessionId: null, messages: [] };
+
+  // A new conversation starts with the tutor skill; follow-ups are plain replies.
+  const message = !chat.sessionId && !text.startsWith("/") ? `/kb-answer ${text}` : text;
+  chat.messages.push({ role: "user", text });
+  $("q").value = "";
+  setBusy(true);
+  drawChat();
+
+  const started = Date.now();
+  const tick = setInterval(() => {
+    const w = $("wait");
+    if (w) w.textContent = `Thinking… ${Math.round((Date.now() - started) / 1000)}s`;
+  }, 1000);
+
+  try {
+    const res = await fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, session_id: chat.sessionId }),
+    });
+    if (!res.ok) {
+      throw new Error(res.status === 404 || res.status === 501
+        ? "The chat needs the dashboard server. Stop the current server (Ctrl+C) and start it with:\n\nuv run python harness/site/server.py"
+        : `Server error ${res.status}`);
+    }
+    const data = await res.json();
+    if (data.session_id) chat.sessionId = data.session_id;
+    chat.messages.push(data.error ? { role: "error", text: data.error } : { role: "bot", text: data.answer });
+  } catch (e) {
+    chat.messages.push({ role: "error", text: String(e.message || e) });
+  } finally {
+    clearInterval(tick);
+    setBusy(false);
+    saveChat();
+    drawChat();
+    loadNotes();  // Claude may have updated your notes
+    $("q").focus();
+  }
+}
+
+$("send").onclick = () => send($("q").value);
+$("q").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+    e.preventDefault();
+    send($("q").value);
+  }
+});
+$("sync").onclick = () => send("/kb-sync", { fresh: true });
+$("new").onclick = () => {
+  chat = { sessionId: null, messages: [] };
+  saveChat();
+  drawChat();
+  $("q").focus();
+};
+drawChat();
+
+async function loadNotes() {
   try {
     const entries = await Promise.all(Object.entries(FILES).map(async ([k, p]) => [k, await load(p)]));
     renderAll(Object.fromEntries(entries));
+    $("error").hidden = true;
   } catch (e) {
     $("error").hidden = false;
     $("error").innerHTML = `<section class="alert"><strong>Couldn't read your notes.</strong>
-      Start a local server from the repo root, then open the page through it:<br>
-      <code>cd paper-companion &amp;&amp; python3 -m http.server 8000</code> →
+      Start the dashboard server from the repo root, then open the page through it:<br>
+      <code>cd paper-companion &amp;&amp; uv run python harness/site/server.py</code> →
       <a href="http://localhost:8000/harness/site/">http://localhost:8000/harness/site/</a>
       <br><span class="small">(${esc(String(e.message || e))})</span></section>`;
     $("step-title").textContent = "Notes not loaded";
   }
-})();
+}
+loadNotes();
 </script>
 </body>
 </html>
