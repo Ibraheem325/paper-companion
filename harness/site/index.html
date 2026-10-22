@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paper Companion Harness</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --bg: #f7f7f5; --card: #ffffff; --text: #1d1d1b; --muted: #6b6b66;
+    --line: #e4e4df; --accent: #3a5bd9; --accent-soft: #e8edfc;
+    --done: #2f8a4f; --done-soft: #e3f3e8; --warn: #a15c00; --warn-soft: #fdf1df;
+    --code: #f0f0ec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161615; --card: #1f1f1d; --text: #ececea; --muted: #9a9a94;
+      --line: #33332f; --accent: #8aa2ff; --accent-soft: #252c47;
+      --done: #6fcf8f; --done-soft: #1d3326; --warn: #f0b35a; --warn-soft: #3a2c17;
+      --code: #2a2a27;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
+  header h1 { font-size: 22px; margin: 0 0 4px; }
+  header p { margin: 0; color: var(--muted); }
+  nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 20px; }
+  nav a {
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px;
+  }
+  nav a:hover { color: var(--accent); border-color: var(--accent); }
+  section {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px 20px; margin-bottom: 16px;
+  }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  h3 { font-size: 13px; margin: 14px 0 6px; color: var(--muted);
+       text-transform: uppercase; letter-spacing: .04em; }
+  a { color: var(--accent); }
+  code { background: var(--code); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+
+  /* Current step */
+  .now { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .now { grid-template-columns: 1fr; } }
+  .big { font-size: 20px; font-weight: 600; margin: 0 0 4px; }
+  .bar { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 10px 0 4px; }
+  .bar > div { height: 100%; background: var(--done); }
+  ul.plain { margin: 0; padding-left: 18px; }
+
+  /* Build order */
+  ol.steps { list-style: none; margin: 0; padding: 0; }
+  ol.steps li {
+    display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: start;
+    padding: 8px 0; border-top: 1px solid var(--line);
+  }
+  ol.steps li:first-child { border-top: 0; }
+  .num {
+    width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 12px; font-weight: 600; border: 1px solid var(--line); color: var(--muted);
+  }
+  li.done .num { background: var(--done-soft); color: var(--done); border-color: transparent; }
+  li.current .num { background: var(--accent); color: #fff; border-color: transparent; }
+  li.current { font-weight: 600; }
+  .learn { display: block; font-weight: 400; font-size: 13px; color: var(--muted); }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .tag.v1 { background: var(--warn-soft); color: var(--warn); }
+  .tag.now { background: var(--accent-soft); color: var(--accent); }
+
+  /* Ask */
+  textarea {
+    width: 100%; min-height: 90px; resize: vertical; padding: 10px; font: inherit;
+    color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  button {
+    font: inherit; font-size: 13px; cursor: pointer; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 5px 10px;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.primary:hover { opacity: .9; color: #fff; }
+  pre.cmd {
+    white-space: pre-wrap; word-break: break-word; background: var(--code);
+    padding: 10px; border-radius: 8px; margin: 8px 0; font-size: 13px; min-height: 38px;
+  }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  input[type=search] {
+    width: 100%; padding: 7px 10px; font: inherit; margin-bottom: 8px; color: var(--text);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  }
+  .empty { color: var(--muted); font-style: italic; padding: 8px 0; }
+  .alert { background: var(--warn-soft); color: var(--warn); border-radius: 8px; padding: 12px 14px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Paper Companion Harness</h1>
+    <p>Your project at a glance. Answers come from Claude via <code>/kb-answer</code>.</p>
+  </header>
+
+  <nav>
+    <a href="#now">Now</a><a href="#ask">Ask</a><a href="#steps">Build order</a>
+    <a href="#glossary">Glossary</a><a href="#decisions">Decisions</a>
+    <a href="#log">Log</a><a href="#sources">Sources</a>
+  </nav>
+
+  <div id="error" hidden></div>
+
+  <section id="now">
+    <h2>Where you are</h2>
+    <div class="now">
+      <div>
+        <p class="big" id="step-title">Loading…</p>
+        <p class="muted small" id="step-learn"></p>
+        <div class="bar"><div id="bar-fill" style="width:0"></div></div>
+        <p class="muted small" id="bar-label"></p>
+        <h3>Goal</h3><div id="goal" class="small"></div>
+      </div>
+      <div>
+        <h3>Done so far</h3><div id="done"></div>
+        <h3>Next action</h3><div id="next"></div>
+        <h3>Open questions</h3><div id="open"></div>
+        <p class="muted small" id="synced"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="ask">
+    <h2>Ask your tutor</h2>
+    <p class="muted small">Type a question or paste an error. Copy the command, then paste it into Claude running in <code>harness/</code>.</p>
+    <div class="chips" id="examples"></div>
+    <textarea id="q" placeholder="e.g. Explain what a KV cache is"></textarea>
+    <pre class="cmd" id="cmd"></pre>
+    <div class="row">
+      <button class="primary" id="copy">Copy command</button>
+      <button id="sync">Copy /kb-sync</button>
+      <span class="muted small" id="copied" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <section id="steps">
+    <h2>Build order</h2>
+    <ol class="steps" id="step-list"></ol>
+  </section>
+
+  <section id="glossary">
+    <h2>Glossary</h2>
+    <input type="search" id="gloss-filter" placeholder="Filter terms…">
+    <div id="gloss-table"></div>
+  </section>
+
+  <section id="decisions">
+    <h2>Decisions</h2>
+    <h3>Founding (design doc)</h3><div id="dec-founding"></div><div id="dec-why" class="small"></div>
+    <h3>Made while building</h3><div id="dec-log"></div>
+  </section>
+
+  <section id="log">
+    <h2>Session log</h2>
+    <div id="session-log"></div>
+  </section>
+
+  <section id="sources">
+    <h2>Sources</h2>
+    <div id="src-tech"></div>
+    <h3>Papers, data and APIs</h3><div id="src-data"></div>
+  </section>
+</main>
+
+<script>
+// Paths are relative to this page; serve from the repo root (see harness/README.md).
+const FILES = {
+  design: "../../docs/design.md",
+  progress: "../context/progress.md",
+  decisions: "../context/decisions.md",
+  glossary: "../context/glossary.md",
+  sources: "../context/sources.md",
+};
+
+const $ = (id) => document.getElementById(id);
+
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Just enough inline Markdown for these notes: code, bold, italic, links, bare URLs.
+function inline(md) {
+  const codes = [];
+  let s = esc(md).replace(/`([^`]+)`/g, (_, c) => `\u0000${codes.push(c) - 1}\u0000`);
+  s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+       .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+       .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+       .replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+  return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${codes[i]}</code>`);
+}
+
+// Text under a heading, up to the next heading of the same or higher level.
+function section(md, pattern) {
+  const lines = md.split("\n");
+  const start = lines.findIndex((l) => /^#{1,6} /.test(l) && pattern.test(l));
+  if (start < 0) return "";
+  const level = lines[start].match(/^#+/)[0].length;
+  const out = [];
+  for (const l of lines.slice(start + 1)) {
+    const h = l.match(/^(#+) /);
+    if (h && h[1].length <= level) break;
+    out.push(l);
+  }
+  return out.join("\n");
+}
+
+// Markdown tables in a block of text -> [{head: [...], rows: [[...]]}].
+function tables(md) {
+  const result = [];
+  let cur = null;
+  for (const line of md.split("\n")) {
+    const t = line.trim();
+    if (!t.startsWith("|")) { cur = null; continue; }
+    const cells = t.replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+    if (cells.every((c) => /^:?-+:?$/.test(c))) continue;
+    if (!cur) { cur = { head: cells, rows: [] }; result.push(cur); }
+    else cur.rows.push(cells);
+  }
+  return result;
+}
+
+const isPlaceholder = (row) => row.some((c) => /\((none|nothing) yet\)/.test(c));
+
+function renderTable(t, filter = "") {
+  if (!t) return '<p class="empty">Nothing here yet.</p>';
+  const q = filter.toLowerCase();
+  const rows = t.rows.filter((r) => !isPlaceholder(r))
+                     .filter((r) => !q || r.join(" ").toLowerCase().includes(q));
+  if (!rows.length) {
+    return `<p class="empty">${q ? "No matches." : "Nothing here yet. Claude adds entries as you learn."}</p>`;
+  }
+  return `<div class="table-wrap"><table><thead><tr>${t.head.map((h) => `<th>${inline(h)}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+
+// The list that follows a bold label like "**Done so far:**".
+function labelled(md, label) {
+  const m = md.match(new RegExp(`\\*\\*${label}:\\*\\*([\\s\\S]*?)(?=\\n\\*\\*|\\n---|\\n#|$)`));
+  if (!m) return "";
+  const body = m[1].trim();
+  const items = body.split("\n").filter((l) => /^\s*- /.test(l)).map((l) => l.replace(/^\s*- /, ""));
+  if (!items.length) return `<p class="small">${inline(body.replace(/\n/g, " "))}</p>`;
+  return `<ul class="plain small">${items.map((i) => `<li>${inline(i)}</li>`).join("")}</ul>`;
+}
+
+async function load(path) {
+  const res = await fetch(path, { cache: "no-store" });
+  if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+  return res.text();
+}
+
+function renderAll(md) {
+  // Build order and current step
+  const current = Number((md.design.match(/\*\*Current step: (\d+)\*\*/) || [])[1] ?? 0);
+  const steps = (tables(section(md.design, /Build order/))[0] || { rows: [] }).rows.map((r) => ({
+    n: Number(r[0]), what: r[1], learn: r[2],
+  }));
+  const isDone = (s) => s.what.includes("✅") || s.n < current;
+  const done = steps.filter(isDone).length;
+  const now = steps.find((s) => s.n === current);
+
+  $("step-title").innerHTML = now ? `Step ${now.n}: ${inline(now.what)}` : `Step ${current}`;
+  $("step-learn").innerHTML = now ? `You'll learn: ${inline(now.learn)}` : "";
+  const pct = steps.length ? Math.round((done / steps.length) * 100) : 0;
+  $("bar-fill").style.width = pct + "%";
+  $("bar-label").textContent = `${done} of ${steps.length} steps done · v1 is done at the end of Step 5`;
+
+  $("step-list").innerHTML = steps.map((s) => {
+    const cls = isDone(s) ? "done" : s.n === current ? "current" : "";
+    const tags = (s.n === current ? '<span class="tag now">you are here</span>' : "") +
+                 (/v1 done/i.test(s.what) ? '<span class="tag v1">v1</span>' : "");
+    const what = s.what.replace(/\s*✅/, "").replace(/\s*\(\*\*v1 done\*\*\)/, "");
+    return `<li class="${cls}"><span class="num">${isDone(s) ? "✓" : s.n}</span>
+      <span>${inline(what)}<span class="learn">${inline(s.learn)}</span></span><span>${tags}</span></li>`;
+  }).join("");
+
+  // Inside the current step
+  $("goal").innerHTML = labelled(md.progress, "Goal");
+  $("done").innerHTML = labelled(md.progress, "Done so far");
+  $("next").innerHTML = labelled(md.progress, "Next action");
+  $("open").innerHTML = labelled(md.progress, "Open questions");
+  const synced = (md.progress.match(/Last synced commit: (.*)/) || [])[1];
+  $("synced").innerHTML = synced ? `Last synced commit: ${inline(synced)}` : "";
+  $("session-log").innerHTML = renderTable(tables(section(md.progress, /^## Log/))[0]);
+
+  // Glossary
+  const gloss = tables(md.glossary)[0];
+  const drawGloss = () => { $("gloss-table").innerHTML = renderTable(gloss, $("gloss-filter").value); };
+  $("gloss-filter").oninput = drawGloss;
+  drawGloss();
+
+  // Decisions
+  $("dec-founding").innerHTML = renderTable(tables(section(md.design, /Decisions/))[0]);
+  $("dec-log").innerHTML = renderTable(tables(md.decisions)[0]);
+  // The "See below" reasons: the bold heading and bullets after the table
+  const why = section(md.design, /Decisions/).split("\n\n").filter((b) => !b.trim().startsWith("|"));
+  $("dec-why").innerHTML = why.map((b) => {
+    const items = b.split(/\n(?=- )/).map((i) => i.replace(/^- /, "").replace(/\s*\n\s*/g, " ").trim());
+    return /^- /.test(b.trim())
+      ? `<ul class="plain">${items.map((i) => `<li>${inline(i)}</li>`).join("")}</ul>`
+      : `<p>${inline(b.replace(/\s*\n\s*/g, " ").trim())}</p>`;
+  }).join("");
+
+  // Sources
+  $("src-tech").innerHTML = renderTable(tables(section(md.sources, /^## Technologies/))[0]);
+  $("src-data").innerHTML = renderTable(tables(section(md.sources, /^## Papers/))[0]);
+
+  // Example questions, tailored to the current step
+  const examples = [
+    "What's the current step, and what do I do next?",
+    now ? `Explain the main concept in Step ${now.n}: ${now.learn.split(",")[0]}` : "Explain what a reranker is",
+    "Why did we choose llama.cpp on the Mac and vLLM on Colab?",
+    "Review the code I just wrote in the repo.",
+    "Here's my error output; what went wrong?\n\n<paste the full error here>",
+  ];
+  $("examples").innerHTML = examples.map((e, i) =>
+    `<button data-i="${i}">${esc(e.split("\n")[0])}</button>`).join("");
+  $("examples").onclick = (ev) => {
+    const b = ev.target.closest("button");
+    if (!b) return;
+    $("q").value = examples[b.dataset.i];
+    $("q").focus();
+    updateCmd();
+  };
+}
+
+function updateCmd() {
+  const q = $("q").value.trim();
+  $("cmd").textContent = q ? `/kb-answer ${q}` : "/kb-answer <your question>";
+}
+
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); }
+  catch {
+    const t = document.createElement("textarea");
+    t.value = text; document.body.appendChild(t); t.select();
+    document.execCommand("copy"); t.remove();
+  }
+  $("copied").textContent = "Copied. Paste it into Claude.";
+  setTimeout(() => { $("copied").textContent = ""; }, 2500);
+}
+
+$("q").addEventListener("input", updateCmd);
+$("copy").onclick = () => copy($("cmd").textContent);
+$("sync").onclick = () => copy("/kb-sync");
+updateCmd();
+
+(async () => {
+  try {
+    const entries = await Promise.all(Object.entries(FILES).map(async ([k, p]) => [k, await load(p)]));
+    renderAll(Object.fromEntries(entries));
+  } catch (e) {
+    $("error").hidden = false;
+    $("error").innerHTML = `<section class="alert"><strong>Couldn't read your notes.</strong>
+      Start a local server from the repo root, then open the page through it:<br>
+      <code>cd paper-companion &amp;&amp; python3 -m http.server 8000</code> →
+      <a href="http://localhost:8000/harness/site/">http://localhost:8000/harness/site/</a>
+      <br><span class="small">(${esc(String(e.message || e))})</span></section>`;
+    $("step-title").textContent = "Notes not loaded";
+  }
+})();
+</script>
+</body>
+</html>
