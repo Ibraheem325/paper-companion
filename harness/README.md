@@ -16,13 +16,18 @@ and official docs, one step at a time.
 
 ## Use it
 
-**Ask questions** (start Claude inside `harness/`):
+**Ask questions.** Two separate steps:
 
-```bash
-cd paper-companion/harness
-claude
-> /kb-answer what's the current step, and what do I do next?
-```
+1. In your terminal, start Claude inside `harness/`:
+   ```bash
+   cd paper-companion/harness
+   claude
+   ```
+2. Wait for Claude's own input box to appear, then type this **into Claude**,
+   not into the terminal:
+   ```
+   /kb-answer what's the current step, and what do I do next?
+   ```
 
 **After a coding session:** `/kb-sync`
 
