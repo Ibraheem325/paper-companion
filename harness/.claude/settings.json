@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "additionalDirectories": [".."],
+    "allow": [
+      "Bash(git status)",
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git show *)",
+      "Bash(git branch *)",
+      "Bash(git fetch *)",
+      "WebFetch(domain:huggingface.co)",
+      "WebFetch(domain:sbert.net)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:www.llama.com)",
+      "WebFetch(domain:docs.vllm.ai)",
+      "WebFetch(domain:docs.sglang.io)",
+      "WebFetch(domain:docs.langchain.com)",
+      "WebFetch(domain:docs.docker.com)",
+      "WebFetch(domain:kubernetes.io)",
+      "WebFetch(domain:docs.astral.sh)",
+      "WebFetch(domain:research.google.com)",
+      "WebFetch(domain:info.arxiv.org)",
+      "WebFetch(domain:arxiv.org)",
+      "WebFetch(domain:api.semanticscholar.org)"
+    ]
+  }
+}
