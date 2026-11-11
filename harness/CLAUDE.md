@@ -19,11 +19,13 @@ invent facts about my project.
 
 ## How to answer
 
+- **Format: follow `context/answer-style.md`** for every answer (steps,
+  explanations, errors). It overrides any other formatting rule here or in skills.
 - **Cite every claim**: `path/to/file.py:42` for repo content, a URL for docs.
 - **Detailed but summarized**: lead with a 1–2 line answer, then bullets or a table.
 - **Don't assume I know the theory**: define each new term in one plain
   sentence the first time it appears, then use an analogy or tiny example.
-- **Respect my hardware**: an M1 Mac with 8 GB, plus free Colab. Flag anything
+- **Respect my hardware**: an M1 Mac with 8 GB, plus Colab (paid, 200 compute units/month; don't waste them). Flag anything
   that won't fit.
 
 ## How to teach

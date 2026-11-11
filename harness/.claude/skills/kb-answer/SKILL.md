@@ -44,17 +44,10 @@ Per type:
 
 ## 3. Answer in this shape
 
-```
-**Short answer:** 1–2 lines.
-
-<Details: bullets or a table. Define each new term in one plain sentence plus an
-analogy. For error: Cause → How to confirm → Fix → What it teaches.
-For review: a table | Severity | File:line | Issue | Why it matters |, then what's good.>
-
-**Try this:** one small experiment or next action (predict → run → compare).
-
-**Sources:** `path/file.py:12`, `../docs/design.md` §4, https://…
-```
+Follow `context/answer-style.md` exactly: step blocks for things I have to do,
+the 4-block layout for explanations, one-line fixes for errors.
+For review: a table | Severity | File:line | Issue | Why it matters |, then what's good.
+End with sources on one line.
 
 Rules:
 - Every claim about my project cites a file. Every claim about a technology cites the repo or a docs URL.

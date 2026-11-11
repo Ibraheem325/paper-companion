@@ -1,6 +1,6 @@
 # Paper Companion: Design Doc
 
-**Current step: 1** (see [Build order](#6-build-order))
+**Current step: 2** (see [Build order](#6-build-order))
 
 ## 1. Idea
 
@@ -40,7 +40,7 @@ This corresponds to the end of **Step 5** in the build order.
 | Machine | Specs | Used for |
 |---|---|---|
 | MacBook | M1, 8 GB RAM | Local development; llama.cpp (small 4-bit models) |
-| Google Colab | Free tier (NVIDIA GPU) | vLLM and SGLang benchmarks |
+| Google Colab | Paid plan, 200 compute units/month, this project only (NVIDIA GPU) | vLLM and SGLang benchmarks |
 
 ## 4. Decisions
 
@@ -91,7 +91,7 @@ paper-companion/
 | Step | What | Main thing learned |
 |---|---|---|
 | 0 | Project skeleton ✅ | uv, git, GitHub |
-| 1 | Tokens and transformers by hand: run a tiny model on the Mac | Tokenizers, logits, generation |
+| 1 | Tokens and transformers by hand: run a tiny model on the Mac ✅ | Tokenizers, logits, generation |
 | 2 | Fetch one arXiv paper (HTML first, PDF fallback) and split it by section | Ingestion, parsing |
 | 3 | Chunk, embed, vector search, without frameworks | Embeddings, similarity search |
 | 4 | Answer with Llama 3.2 3B via a llama.cpp server, with citations | Serving, prompting, RAG end to end |

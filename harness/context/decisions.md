@@ -9,4 +9,4 @@ new one that says "replaces #N".
 
 | # | Date | Step | Decision | Why | Alternatives considered |
 |---|---|---|---|---|---|
-| — | — | — | (none yet) | — | — |
+| 3 | 2026-11-11 | 1 | Use `HuggingFaceTB/SmolLM2-135M` (base) for the by-hand transformers lessons | Tiny (~0.5 GB in memory), fast on the 8 GB M1, made by Hugging Face, Llama-style tokenizer | GPT-2 (124M) |

@@ -6,4 +6,17 @@ Paper Companion.
 
 | Term | Plain-English meaning | Where it shows up in the project | First met in step | Official link |
 |---|---|---|---|---|
-| — | (none yet) | — | — | — |
+| Tokenizer | Turns text into a list of numbers (token IDs) the model can read, and back again. Each model has its own. | Step 1 notebook (`tok`); later counts how much paper text fits in the model | 1 | https://huggingface.co/docs/transformers/main_classes/tokenizer |
+| Token ID | The number for one piece of text: its position in the vocabulary. `Ġreads` → 12927. | Step 1 notebook, `input_ids` | 1 | https://huggingface.co/docs/transformers/main_classes/tokenizer |
+| Vocabulary | The fixed list of all pieces a tokenizer knows (`vocab.json`). `Ġ` in a piece means "space before it". | Downloaded with SmolLM2's tokenizer | 1 | https://huggingface.co/learn/llm-course/chapter2/4 |
+| Subword tokenization | Words not in the vocabulary get built from smaller known pieces, like Lego bricks: "Ibraheem" → `I` `bra` `he` `em`. | Papers have many rare terms, so they cost more tokens (matters for chunking in Step 3) | 1 | https://huggingface.co/learn/llm-course/chapter2/4 |
+| Logits | The model's raw score for every token in the vocabulary as the next token. Shape `[sentences, tokens, vocab]`. | Step 1 notebook: `[1, 5, 49152]` | 1 | https://huggingface.co/docs/transformers/llm_tutorial |
+| Softmax | Turns raw scores into percentages that add up to 100%; small score gaps become big probability gaps. | Step 1: `' the'` 26%, `' Paris'` 8% | 1 | https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.softmax.html |
+| Autoregressive generation | The model predicts one token per run; you append it and run again, because the model has no memory between runs. | Step 1 hand-written loop; `model.generate()`; llama.cpp in Step 4 | 1 | https://huggingface.co/docs/transformers/llm_tutorial |
+| Greedy decoding | Always pick the single highest-scoring token (`argmax`). Deterministic; prone to repetition loops. | Step 1: "department of department of…" | 1 | https://huggingface.co/docs/transformers/generation_strategies |
+| Sampling | Pick the next token at random, weighted by its probability, like a raffle (`torch.multinomial`). Breaks loops. | Step 1 sampling loop | 1 | https://huggingface.co/docs/transformers/generation_strategies |
+| Temperature | Divides logits before softmax: below 1 = safer/more focused, above 1 = wilder/more random. | Step 1 sampling loop (0.6, 0.8, 1.0) | 1 | https://huggingface.co/docs/transformers/generation_strategies |
+| Attention mask | 1 = real token, 0 = padding to ignore. Built by the tokenizer by simple counting; a hard filter, not a belief. | Step 1 `inputs`; matters when batching chunks in Step 3 | 1 | https://huggingface.co/docs/transformers/glossary#attention-mask |
+| Padding | Filler tokens added so all sentences in a batch have the same length. | Batching chunks in Step 3 | 1 | https://huggingface.co/docs/transformers/pad_truncation |
+| KV cache | The model remembers its work on earlier tokens so each new run only processes the new token. Same maths, slightly different rounding. | Step 1: `use_cache=False` made `generate()` match the hand loop; central to Step 10 | 1 | https://huggingface.co/docs/transformers/llm_tutorial |
+| Compute unit | Colab's paid-plan currency: a runtime drains units per hour while connected, and bigger GPUs drain faster (per-hour rates not yet verified; check the Resources panel). When they run out you drop back to the free tier. | My Colab budget: 200/month, spent on GPU steps (e.g. 9, 10) | 1 | https://research.google.com/colaboratory/faq.html |
