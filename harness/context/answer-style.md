@@ -57,6 +57,12 @@ copy-paste mistakes.
 
 ## 4. General
 
+- When a file changes, give the **whole new file** to paste over the old one.
+  Never "rename this line, add that import" piecemeal edits.
+
+- Ask me to predict only when the prediction teaches a real concept (tokens,
+  probabilities, retrieval quality…). Never for trivia like file sizes or byte counts.
+
 - Anything I have to paste goes in its own fenced code block with a language tag
   (```` ```python ````, ```` ```bash ````, ```` ```markdown ````), one block per paste, nothing
   else inside it, so the UI shows a copy button and I can copy it in one click.
