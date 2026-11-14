@@ -1,6 +1,6 @@
 # Paper Companion: Design Doc
 
-**Current step: 4** (see [Build order](#6-build-order))
+**Current step: 5** (see [Build order](#6-build-order))
 
 ## 1. Idea
 
@@ -94,7 +94,7 @@ paper-companion/
 | 1 | Tokens and transformers by hand: run a tiny model on the Mac ✅ | Tokenizers, logits, generation |
 | 2 | Fetch one arXiv paper (HTML first, PDF fallback) and split it by section ✅ | Ingestion, parsing |
 | 3 | Chunk, embed, vector search, without frameworks ✅ | Embeddings, similarity search |
-| 4 | Answer with Llama 3.2 3B via a llama.cpp server, with citations | Serving, prompting, RAG end to end |
+| 4 | Answer with Llama 3.2 3B via a llama.cpp server, with citations ✅ | Serving, prompting, RAG end to end |
 | 5 | Evaluation v1 on a QASPER subset (**v1 done**) | Retrieval and answer metrics |
 | 6 | Improve retrieval: chunking, keyword + vector hybrid, reranker; measure each change | Experiments |
 | 7 | PDF parser comparison, using arXiv HTML as the answer key | Parsing quality |

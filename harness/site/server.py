@@ -33,6 +33,7 @@ def allowed_tools() -> list[str]:
         "Read", "Grep", "Glob",
         f"Edit(/{HARNESS}/context/**)",
         f"Edit(/{REPO}/docs/design.md)",
+        f"Edit(/{HARNESS}/site/**)",
     ]
 
 

@@ -18,3 +18,8 @@ new one that says "replaces #N".
 | 9 | 2026-11-12 | 3 | Chunks: 200 words, 40-word overlap, never crossing a section border | Overlap keeps border sentences whole; one section per chunk keeps citations exact | No overlap; token-based chunk sizes |
 | 10 | 2026-11-12 | 3 | Add bge's query instruction prefix to questions only (not chunks) | Recommended by the model card; moved the right chunk from #3 to #1 on one test question (to be measured in Step 5) | No prefix |
 | 11 | 2026-11-12 | 3 | Store the index as `.npy` (vectors) + `.json` (chunks) in `data/index/`; plain NumPy dot-product search | Learn the mechanics without frameworks; tiny index per paper | A vector database (FAISS, Chroma), revisit if many papers |
+| 12 | 2026-11-14 | 4 | Model file: `bartowski/Llama-3.2-3B-Instruct-GGUF:Q4_K_M`, context 4096 | ~2 GB fits the 8 GB M1; the full 128k context would need far more memory | Other quantizations (Q8, Q3) |
+| 13 | 2026-11-14 | 4 | Server on fixed port 8080; app reads `LLM_URL` (env var) | A stable address; switching engines is a config change (decision #1) | Random port each launch |
+| 14 | 2026-11-14 | 4 | Call the server with plain `httpx`, no SDK | Already a dependency; framework-free like Step 3 | `openai` Python SDK |
+| 15 | 2026-11-14 | 4 | Keep LaTeX in the index; strip `$…$` only in answers (`plain_math`) | The model reads LaTeX fine; re-indexing not needed | Strip at ingestion; ask the model in the prompt |
+| 16 | 2026-11-14 | — | Dashboard chat may also edit `harness/site/**` | Lets Claude fix the dashboard directly | Paste every change by hand |

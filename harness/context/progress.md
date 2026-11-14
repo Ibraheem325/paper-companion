@@ -5,16 +5,26 @@ of `../docs/design.md`; update both when a step is finished.
 
 Last synced commit: (none yet; run `/kb-sync`)
 
-## Current step: 4, Answer with Llama 3.2 3B via a llama.cpp server, with citations
+## Current step: 5, Evaluation v1 on a QASPER subset
 
-**Goal:** run Llama 3.2 3B locally through llama.cpp, give it the top chunks,
-and get answers that cite the section they came from.
+**Goal:** measure retrieval and answer quality on a QASPER subset instead of
+judging from one question at a time.
 
 **Done so far:**
 - (nothing yet)
 
 **Next action:**
 - (decide with the tutor)
+
+## Finished: Step 4, Answer with Llama 3.2 3B via a llama.cpp server, with citations ✅ (2026-11-14)
+
+Module: `src/paper_companion/generate/answer.py` → `answer(question, arxiv_id)`. Notebook: `05_answer.ipynb`.
+- llama.cpp via Homebrew; `llama-server -hf bartowski/Llama-3.2-3B-Instruct-GGUF:Q4_K_M -c 4096 --port 8080` (decisions #12, #13)
+- Without context: "unable to verify" (no hallucination, but useless) → with the abstract pasted in: correct answer
+- Prompt lessons: question must match the context (paper ID → "I do not know"); format rule goes last; a refusal invented "[Context]"; the format example was copied word for word → neutral example
+- "How many layers does the encoder have?" → "N = 6 … [3 Model Architecture]"; image-classification question → "I do not know."
+- Speed: ~80–95 tok/s reading the prompt, ~10–13 tok/s writing; prefix caching reused up to 151 tokens
+- Citations are section-level only (all 3 hits from one section)
 
 ## Finished: Step 3, Chunk, embed, vector search (without frameworks) ✅ (2026-11-12)
 
@@ -55,6 +65,7 @@ Newest first. One line per session: date, what I tried, what I learned.
 
 | Date | Step | What I did | What I learned |
 |---|---|---|---|
+| 2026-11-14 | 4 ✅ | Installed llama.cpp, served Llama 3.2 3B Q4, did RAG by hand with curl, then in Python, moved it into `generate/answer.py` | Server + OpenAI API; system vs user message; grounding; prompt order matters; example leakage; prefix caching |
 | 2026-11-12 | 3 ✅ | Chunked a paper, embedded with bge-small, searched by cosine similarity, tried the query prefix, moved it into `index/` + `retrieve/` | Chunks & overlap; embeddings = one fixed-size vector per chunk; dot product of normalized vectors; rank over score; kernel restarts wipe variables |
 | 2026-11-11 | 2 ✅ | Fetched arXiv HTML, split by section, cleaned text, tested a 2nd paper, moved code into `ingest/arxiv.py`, added PDF fallback | Why HTML beats PDF (structure, LaTeX); parsers leave junk (captions, duplicated math) you must inspect; notebook → module |
 | 2026-11-11 | 1 ✅ | Installed transformers + torch; notebook: tokenizer, logits, softmax, greedy + sampling loops, compared with `generate()` | Tokens & subwords; logits → softmax; one token per run, fed back in; greedy repeats, temperature adds randomness; KV cache can flip near-ties. Colab is paid (200 units/month) |

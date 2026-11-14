@@ -79,7 +79,6 @@
     color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
   }
   textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
   button {
     font: inherit; font-size: 13px; cursor: pointer; border-radius: 8px;
     border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 5px 10px;
@@ -107,7 +106,8 @@
   .msg.bot > :last-child { margin-bottom: 0; }
   .msg.bot h4 { margin: 12px 0 6px; font-size: 15px; }
   .msg.bot ul, .msg.bot ol { padding-left: 20px; }
-  .msg.bot pre { background: var(--code); padding: 10px; border-radius: 8px; overflow-x: auto; }
+  .msg.bot pre { background: var(--code); padding: 10px; border-radius: 8px; overflow-x: auto; position: relative; }
+  .msg.bot pre .copy { position: absolute; top: 6px; right: 6px; font-size: 12px; padding: 2px 8px; }
   .msg.bot pre code { background: none; padding: 0; }
   .msg.bot blockquote { border-left: 3px solid var(--line); padding-left: 10px; color: var(--muted); }
   .msg.bot hr { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
@@ -169,7 +169,6 @@
     </div>
     <p class="muted small">Answers come from Claude Code on your Mac, following your harness rules. Follow-up messages continue the same conversation.</p>
     <div class="chat" id="chat" aria-live="polite"></div>
-    <div class="chips" id="examples"></div>
     <textarea id="q" placeholder="Ask a question or paste an error… (Enter to send, Shift+Enter for a new line)"></textarea>
     <div class="row" style="margin-top:8px">
       <button class="primary" id="send">Send</button>
@@ -348,28 +347,6 @@ function renderAll(md) {
   // Sources
   $("src-tech").innerHTML = renderTable(tables(section(md.sources, /^## Technologies/))[0]);
   $("src-data").innerHTML = renderTable(tables(section(md.sources, /^## Papers/))[0]);
-
-  // Example questions, tailored to the current step
-  const examples = [
-    "What's the current step, and what do I do next?",
-    now ? `Explain the main concept in Step ${now.n}: ${now.learn.split(",")[0]}` : "Explain what a reranker is",
-    "Why did we choose llama.cpp on the Mac and vLLM on Colab?",
-    "Review the code I just wrote in the repo.",
-    "Here's my error output; what went wrong?\n\n<paste the full error here>",
-  ];
-  $("examples").innerHTML = examples.map((e, i) =>
-    `<button data-i="${i}">${esc(e.split("\n")[0])}</button>`).join("");
-  $("examples").onclick = (ev) => {
-    const b = ev.target.closest("button");
-    if (!b) return;
-    const text = examples[b.dataset.i];
-    if (text.includes("<paste")) {  // needs the user's error first
-      $("q").value = text;
-      $("q").focus();
-    } else {
-      send(text, { fresh: true });
-    }
-  };
 }
 
 // ---------- Chat ----------
@@ -387,7 +364,7 @@ function markdown(text) {
       const code = [];
       for (i++; i < lines.length && !lines[i].startsWith("```"); i++) code.push(lines[i]);
       i++;
-      out.push(`<pre><code>${esc(code.join("\n"))}</code></pre>`);
+      out.push(`<pre><button class="copy" title="Copy">Copy</button><code>${esc(code.join("\n"))}</code></pre>`);
     } else if (/^\s*\|/.test(line)) {
       const block = [];
       for (; i < lines.length && /^\s*\|/.test(lines[i]); i++) block.push(lines[i]);
@@ -435,13 +412,18 @@ function drawChat() {
     : m.role === "error" ? `<div class="msg err">${esc(m.text)}</div>`
     : `<div class="msg bot">${markdown(m.text)}</div>`).join("") +
     (busy ? '<div class="msg wait" id="wait">Thinking…</div>' : "");
-  $("chat").scrollTop = $("chat").scrollHeight;
+  // Show the start of a new answer, like a normal chat; otherwise stick to the bottom.
+  const box = $("chat"), last = box.lastElementChild;
+  if (last && !busy && !last.classList.contains("user")) {
+    box.scrollTop += last.getBoundingClientRect().top - box.getBoundingClientRect().top;
+  } else {
+    box.scrollTop = box.scrollHeight;
+  }
 }
 
 function setBusy(on) {
   busy = on;
   for (const id of ["send", "sync", "new"]) $(id).disabled = on;
-  $("examples").querySelectorAll("button").forEach((b) => { b.disabled = on; });
 }
 
 async function send(text, { fresh = false } = {}) {
@@ -502,6 +484,13 @@ $("new").onclick = () => {
   drawChat();
   $("q").focus();
 };
+$("chat").addEventListener("click", async (e) => {
+  const b = e.target.closest("button.copy");
+  if (!b) return;
+  await navigator.clipboard.writeText(b.parentElement.querySelector("code").textContent);
+  b.textContent = "Copied ✓";
+  setTimeout(() => { b.textContent = "Copy"; }, 1500);
+});
 drawChat();
 
 async function loadNotes() {
