@@ -48,20 +48,6 @@ flowchart LR
 | Retrieve | [`retrieve/search.py`](src/paper_companion/retrieve/search.py) | Dot product over normalized vectors (cosine similarity), with the model's query-instruction prefix |
 | Generate | [`generate/answer.py`](src/paper_companion/generate/answer.py) | Builds a grounded prompt and calls any OpenAI-compatible server through `LLM_URL` |
 
-## Engineering decisions
-
-Every non-obvious choice is recorded with its reason and the alternatives considered: 16 so far. A few of them:
-
-| Decision | Why |
-|---|---|
-| **llama.cpp on the Mac; vLLM and SGLang on a cloud GPU** | 8 GB of shared memory leaves room only for small 4-bit models; llama.cpp is the most mature engine for Apple Silicon, while vLLM and SGLang need NVIDIA GPUs |
-| **The app only knows a URL** (OpenAI-compatible API) | Switching between llama.cpp, vLLM and SGLang is a configuration change, not a code change |
-| **arXiv HTML first, PDF as fallback** | HTML keeps section structure and LaTeX; PDFs lose headings and add line-break noise |
-| **`bge-small-en-v1.5` over `all-MiniLM-L6-v2`** | Reads 512 tokens, so 200-word chunks aren't truncated; small enough (~130 MB) for the M1 |
-| **Chunks never cross a section border** | Every chunk belongs to exactly one section, so citations stay exact |
-| **Llama 3.2 3B at Q4_K_M with a 4096-token context** | About 2 GB, so it fits alongside macOS; the full 128k context would not |
-| **No vector database yet** | A NumPy index is enough for one paper and teaches the mechanics; revisit when indexing many papers |
-
 ## What I've measured so far
 
 - **Generation speed on the M1:** about 80–95 tokens/s reading the prompt and 10–13 tokens/s writing, with llama.cpp reusing cached prompt prefixes.
