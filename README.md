@@ -1,6 +1,6 @@
 # Paper Companion
 
-**Ask questions about any arXiv paper and get answers grounded in the paper's own text, with a citation to the section each answer came from. It runs fully locally on an 8 GB MacBook Air with Llama 3.2 3B.**
+**Ask questions about any arXiv paper and get answers grounded in the paper's own text, with a citation to the section each answer came from. It runs fully locally on my 8 GB MacBook Air with Llama 3.2 3B.**
 
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 ![uv](https://img.shields.io/badge/managed%20with-uv-purple)
